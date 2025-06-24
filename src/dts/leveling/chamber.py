@@ -24,3 +24,8 @@ chamber_width = Node(
     description='width of chamber',
     units='mm'
 )
+chamber_length = Node(
+    label='chamber_length',
+    description='length of chamber',
+    units='mm',
+)
