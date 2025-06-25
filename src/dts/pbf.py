@@ -1,7 +1,13 @@
 from constrainthg.hypergraph import Node, Hypergraph
 import constrainthg.relations as R
 
+from src.dts.blade import blade_hg
+from src.dts.build_plate import plate_hg
+from src.dts.chamber import chamber_hg
+from src.dts.hopper import hopper_hg
+
 pbf_hg = Hypergraph()
+pbf_hg.union(pbf_hg, blade_hg, plate_hg, chamber_hg, hopper_hg)
 
 # Nodes
 build_time = Node(

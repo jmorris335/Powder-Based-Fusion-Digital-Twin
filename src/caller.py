@@ -1,4 +1,4 @@
-from src.dts.process import pbf_hg
+from src.dts.pbf import pbf_hg
 from src.aux.plotter import plot_pbf_wrapper
 
 inputs = dict(
