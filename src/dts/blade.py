@@ -1,7 +1,7 @@
 from constrainthg.hypergraph import Node, Hypergraph
 import constrainthg.relations as R
 
-from src.relations.relations import *
+from relations.relations import *
 
 blade_hg = Hypergraph()
 

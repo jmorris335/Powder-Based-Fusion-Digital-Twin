@@ -1,5 +1,5 @@
-from src.dts.pbf import pbf_hg
-from src.aux.plotter import plot_pbf_wrapper
+from dts.pbf import pbf_hg
+from aux.plotter import plot_pbf_wrapper
 
 inputs = dict(
     chamber_width=6.1,
