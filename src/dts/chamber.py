@@ -29,3 +29,18 @@ chamber_length = Node(
     description='length of chamber',
     units='mm',
 )
+chamber_height = Node(
+    label='chamber_height',
+    description='height of chamber',
+    units='mm',
+)
+bed_height = Node(
+    label='bed_height',
+    description='height of build surface',
+    units='mm',
+)
+bin_width = Node(
+    label='bin_width',
+    description='width of disposal bin',
+    units='mm'
+)

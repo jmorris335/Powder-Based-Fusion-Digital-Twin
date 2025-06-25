@@ -30,18 +30,18 @@ def get_chamber_patches(width: float, height: float,
     bin = Rectangle((tol, tol), bin_width-tol, surface_height-tol)
     return PatchCollection([chamber, bin], fc='white', ec='k', lw=2)
 
-def plot_pbf(chamber_width: float, chamber_height: float, surface_height: float,
+def plot_pbf(chamber_width: float, chamber_height: float, bed_height: float,
              bin_width: float,
-             blade_position: float, blade_width: float, 
+             blade_position: float, blade_height: float, 
              hopper_x_position: float, hopper_y_position: float, hopper_width: float, 
              build_plate_x_position: float, build_plate_y_position: float, 
              build_plate_width: float, tol: float=0.1):
     """Plots the powder-bed fusion machine."""
     fig, ax = plt.subplots()
-    ax.add_collection(get_chamber_patches(chamber_width, chamber_height, surface_height, bin_width, tol))
-    ax.add_patch(get_blade_patch(blade_position, surface_height, blade_width))
-    ax.add_patch(get_hopper_patch(hopper_x_position, hopper_y_position, hopper_width, surface_height - hopper_y_position))
-    ax.add_patch(get_build_plate_patch(build_plate_x_position, build_plate_y_position, build_plate_width, surface_height - build_plate_y_position))
+    ax.add_collection(get_chamber_patches(chamber_width, chamber_height, bed_height, bin_width, tol))
+    ax.add_patch(get_blade_patch(blade_position, bed_height, blade_height))
+    ax.add_patch(get_hopper_patch(hopper_x_position, hopper_y_position, hopper_width, bed_height - hopper_y_position))
+    ax.add_patch(get_build_plate_patch(build_plate_x_position, build_plate_y_position, build_plate_width, bed_height - build_plate_y_position))
     ax.set_xlim(-tol, chamber_width + tol)
     ax.set_ylim(-tol, chamber_height + tol)
     ax.set_aspect('equal')
@@ -51,10 +51,10 @@ if __name__ == '__main__':
     plot_pbf(
         chamber_width=6.1,
         chamber_height=4.1,
-        surface_height=3.,
+        bed_height=3.,
         bin_width=2.,
         blade_position=5.8,
-        blade_width=0.5,
+        blade_height=0.5,
         hopper_x_position=4,
         hopper_y_position=1.4,
         hopper_width=2,

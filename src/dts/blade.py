@@ -10,6 +10,7 @@ timestep = Node('timestep', description='smallest time unit considered', units='
 blade_name = Node('blade_name', description='name for blade')
 blade_type = Node('blade_type', description='type of blade')
 blade_angle = Node('blade_angle', description='angle for blade', units='degrees')
+blade_height = Node('blade_height', description='height of blade', units='mm')
 blade_position = Node(
     label='blade_position',
     description='distance of blade from start position',
