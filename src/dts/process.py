@@ -9,6 +9,16 @@ build_time = Node(
     description='time to build part',
     units='s',
 )
+build_progress = Node(
+    label='build_progress',
+    description='proportion of build completed',
+    units='%',
+)
+layers_completed = Node(
+    label='layers_completed',
+    description='number of layers completed',
+)
+
 amount_in_stock = Node(
     label='amount_in_stock',
     description='amount of material remaining in stock',
