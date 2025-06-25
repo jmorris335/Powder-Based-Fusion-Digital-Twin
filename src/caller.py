@@ -14,6 +14,9 @@ inputs = dict(
     build_plate_x_position=2,
     build_plate_y_position=2.1,
     build_plate_width=2,
+    time=3.71,
+    build_progress=81.3,
+    laser_is_on=True,
 )
 
 pbf_hg.solve('blade_position', inputs)

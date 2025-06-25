@@ -61,3 +61,12 @@ blade_hg.add_edge(
     target=blade_is_returning,
     rel=Ris_negative,
 )
+blade_hg.add_edge(
+    {'rate': blade_velocity,
+     'step': timestep,
+     'initial': blade_position},
+    target=blade_position,
+    rel=Reulerian_integration,
+    index_via=lambda rate, initial, **kw : R.Rsame(rate, initial),
+    disposable=['rate', 'initial'],
+)
