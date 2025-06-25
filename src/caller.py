@@ -1,5 +1,5 @@
 from dts.pbf import pbf_hg
-from aux.plotter import plot_pbf_wrapper
+from aux.plotter import visualization_caller
 
 inputs = dict(
     chamber_width=6.1,
@@ -17,6 +17,6 @@ inputs = dict(
 )
 
 pbf_hg.solve('blade_position', inputs)
-plot_pbf_wrapper(pbf_hg)
+visualization_caller(pbf_hg)
 
 
