@@ -15,3 +15,9 @@ def Reulerian_integration(rate: float, step: float, initial: float,
     """Performs a first-order Eulerian integration."""
     out = initial + rate * step
     return out
+
+def Rlayer_finished_scanning(scan_time: float, keyframe: float, time: float, 
+                             *args, **kwargs)-> bool:
+    """Returns true if the layer is finished scanning."""
+    done = time >= scan_time + keyframe
+    return done

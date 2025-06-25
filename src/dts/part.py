@@ -35,6 +35,7 @@ build_progress = part_hg.add_node(Node(
     units='%',
 ))
 
+# Edges
 part_hg.add_edge(
     {'time': time,
      'total': build_time},

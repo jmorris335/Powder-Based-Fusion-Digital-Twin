@@ -50,7 +50,7 @@ blade_is_returning = blade_hg.add_node(Node(
     units='Boolean',
 ))
 
-# Relations
+# Edges
 blade_hg.add_edge(
     blade_velocity,
     target=blade_is_clearing,
@@ -67,6 +67,7 @@ blade_hg.add_edge(
      'initial': blade_position},
     target=blade_position,
     rel=Reulerian_integration,
+    index_offset=1,
     index_via=lambda rate, initial, **kw : R.Rsame(rate, initial),
     disposable=['rate', 'initial'],
 )
