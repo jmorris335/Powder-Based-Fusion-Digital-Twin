@@ -28,6 +28,16 @@ layer_start_time = pbf_hg.add_node(Node(
     description='time current layer was first prepared for fusing',
     units='s',
 ))
+layer_build_times = part_hg.add_node(Node(
+    label='layer_build_times',
+    description='list of times to build each layer',
+    units='List[s]',
+))
+layer_build_time = part_hg.add_node(Node(
+    label='layer_build_time',
+    description='time to build current layer',
+    units='s',
+))
 scan_time = pbf_hg.add_node(Node(
     label='scan_time',
     description='time required to fuse current layer',
@@ -80,4 +90,12 @@ pbf_hg.add_edge(
     rel=R.Rsum,
     index_offset=1,
     disposable=['time'],
+)
+pbf_hg.add_edge(
+    {'index': layers_completed,
+     'times': layer_build_time},
+    target=layer_build_time,
+    rel=lambda index, times, **kw : times[index],
+    via=lambda times, index, **kw : index < len(times),
+    disposable='index'
 )

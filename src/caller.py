@@ -1,3 +1,5 @@
+import random
+
 from dts.pbf import pbf_hg
 from aux.plotter import visualization_caller
 
@@ -14,12 +16,14 @@ inputs = dict(
     build_plate_x_position=2,
     build_plate_y_position=2.1,
     build_plate_width=2,
-    time=3.71,
-    build_progress=81.3,
+    time=63.71,
+    # build_time=81.3,
     laser_is_on=True,
+    layer_build_times = [8. + 4 * random.random() for i in range(30)],
 )
 
-pbf_hg.solve('blade_position', inputs)
+t = pbf_hg.solve('build_progress', inputs, memory_mode=True)
+print(t)
 visualization_caller(pbf_hg)
 
 

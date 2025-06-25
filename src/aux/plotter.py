@@ -8,6 +8,11 @@ def visualization_caller(hg: Hypergraph):
     """Plots the PBF machine from the hypergraph."""
     kwargs = filter_dict_to_kwargs(plot_pbf, hg.nodes)
     kwargs = {k : n.static_value for k, n in kwargs.items()}
+    tnodes = {tn.node_label : tn.value for tn in hg.solved_tnodes}
+    for kw, val in kwargs.items():
+        if val is None:
+            if kw in tnodes:
+                kwargs[kw] = tnodes[kw]
     plot_pbf(**kwargs)
 
 def filter_dict_to_kwargs(func, data: dict):
