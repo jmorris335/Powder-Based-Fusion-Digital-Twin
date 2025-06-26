@@ -8,7 +8,13 @@ from relations.relations import *
 pbf_hg = Hypergraph()
 pbf_hg.union(pbf_hg, chamber_hg, part_hg)
 
-# Nodes
+
+########################################################################
+##    Nodes
+########################################################################
+
+
+##    Time    ##########################################################
 timestep = pbf_hg.add_node(Node(
     label='timestep',
     description='smallest time unit considered',
@@ -19,9 +25,32 @@ time = pbf_hg.add_node(Node(
     description='current time of process',
     units='s',
 ))
+
+##    Material    ######################################################
+amount_in_stock = pbf_hg.add_node(Node(
+    label='amount_in_stock',
+    description='amount of material remaining in stock',
+    units='g',
+))
+current_material = pbf_hg.add_node(Node(
+    label='current_material',
+    description='name of material currently loaded in chamber',
+))
+
+##    Layers    ########################################################
+layer_thickness = pbf_hg.add_node(Node(
+    label='layer_thickness',
+    description='height of each layer of the part',
+    units='mm'
+))
 layers_completed = pbf_hg.add_node(Node(
     label='layers_completed',
     description='number of layers completed',
+))
+build_progress = part_hg.add_node(Node(
+    label='build_progress',
+    description='proportion of build completed',
+    units='%',
 ))
 layer_start_time = pbf_hg.add_node(Node(
     label='layer_start_time',
@@ -43,6 +72,8 @@ scan_time = pbf_hg.add_node(Node(
     description='time required to fuse current layer',
     units='s',
 ))
+
+##    Laser    #########################################################
 laser_is_on = pbf_hg.add_node(Node(
     label='laser_is_on',
     description='true if laser is on',
@@ -53,36 +84,122 @@ layer_fused = pbf_hg.add_node(Node(
     description='true if current layer has been completely fused',
     units='Boolean',
 ))
-layer_complete = pbf_hg.add_node(Node(
-    label='layer_complete',
-    description='true if no more actions need to occur on current layer',
+
+##    Bed    ###########################################################
+bed_height = pbf_hg.add_node(Node(
+    label='bed_height',
+    description='distance of bed surface from floor',
+    units='mm',
+))
+bed_is_leveled = pbf_hg.add_node(Node(
+    label='bed_is_leveled',
+    description='true if bed is ready for fusion to begin',
     units='Boolean',
 ))
-amount_in_stock = pbf_hg.add_node(Node(
-    label='amount_in_stock',
-    description='amount of material remaining in stock',
-    units='g',
-))
-current_material = pbf_hg.add_node(Node(
-    label='current_material',
-    description='name of material currently loaded in chamber',
+bed_is_cleared = pbf_hg.add_node(Node(
+    label='bed_is_cleared',
+    description='true if bed has been cleared',
+    units='Boolean',
 ))
 
-# Edges
-pbf_hg.add_edge(
-    {'scan_time': scan_time,
-     'keyframe': layer_start_time,
-     'time': time},
-    target=layer_fused,
-    rel=Rlayer_finished_scanning,
-    edge_props=['LEVEL', 'DISPOSE_ALL'],
-)
-pbf_hg.add_edge(
-    {'fused': layer_fused,
-     'complete': layer_complete},
-    target=laser_is_on,
-    rel=R.Rnot_any
-)
+##    Build Plate    ###################################################
+plate_position = pbf_hg.add_node(Node(
+    label='plate_position',
+    description='distance from build plate to build plate',
+    units='mm',
+))
+plate_initial_position = pbf_hg.add_node(Node(
+    label='plate_initial_position',
+    description='initial distance from build plate to build plate',
+    units='mm',
+))
+plate_lowering_distance = pbf_hg.add_node(Node(
+    label='plate_lowering_distance',
+    description='distance plate lowers after fusion process',
+    units='mm'
+))
+plate_is_lowered = pbf_hg.add_node(Node(
+    label='plate_is_lowered',
+    description='true if bed is one level below current layer',
+    units='Boolean',
+))
+
+##    Hopper    ########################################################
+hopper_initial_position = pbf_hg.add_node(Node(
+    label='hopper_initial_position',
+    description='initial distance from hopper floor to build plate',
+    units='mm',
+))
+hopper_position = pbf_hg.add_node(Node(
+    label='hopper_position',
+    description='distance from bed surface to hopper floor (usually negative)',
+    units='mm',
+))
+hopper_prev_position = pbf_hg.add_node(Node(
+    label='hopper_prev_position',
+    description='previous distance from bed surface to hopper floor',
+    units='mm',
+))
+hopper_raising_distance = pbf_hg.add_node(Node(
+    label='hopper_raising_distance',
+    description='distance plate raises after fusion process',
+    units='mm'
+))
+hopper_is_raised = pbf_hg.add_node(Node(
+    label='hopper_is_raised',
+    description='true if hopper is one level above current layer',
+    units='Boolean',
+))
+
+##    Blade    #########################################################
+blade_is_leveling = pbf_hg.add_node(Node(
+    label='blade_is_leveling',
+    description='true if the blade is currently moving',
+    units='Boolean',
+))
+blade_is_clearing = pbf_hg.add_node(Node(
+    label='blade_is_clearing',
+    description='true if blade is actively clearing bed',
+    units='Boolean',
+))
+blade_returned = pbf_hg.add_node(Node(
+    label='blade_returned',
+    description='true if blade is in its home position',
+    units='Boolean',
+))
+blade_at_end = pbf_hg.add_node(Node(
+    label='blade_at_end',
+    description='true if blade is in its end position',
+    units='Boolean',
+))
+blade_is_returning = pbf_hg.add_node(Node(
+    label='blade_is_returning',
+    description='true if blade returning to its home position',
+    units='Boolean',
+))
+blade_position = pbf_hg.add_node(Node(
+    label='blade_position',
+    description='distance of blade from left of chamber',
+    units='mm',
+))
+blade_home_position = pbf_hg.add_node(Node(
+    label='blade_home_position',
+    description='home position for blade from left of chamber',
+    units='mm',
+))
+blade_end_position = pbf_hg.add_node(Node(
+    label='blade_end_position',
+    description='maximum position for blade from left of chamber',
+    units='mm',
+))
+
+
+########################################################################
+##    Edges
+########################################################################
+
+
+##    Time    ##########################################################
 pbf_hg.add_edge(
     {'time': time,
      'step': timestep},
@@ -97,5 +214,118 @@ pbf_hg.add_edge(
     target=layer_build_time,
     rel=lambda index, times, **kw : times[index],
     via=lambda times, index, **kw : index < len(times),
-    disposable='index'
+    disposable='index',
+)
+
+##    Build Process    #################################################
+pbf_hg.add_edge(
+    {'scan_time': scan_time,
+     'keyframe': layer_start_time,
+     'time': time},
+    target=layer_fused,
+    rel=Rlayer_finished_scanning,
+    edge_props=['LEVEL', 'DISPOSE_ALL'],
+)
+pbf_hg.add_edge(
+    {'leveled': bed_is_leveled,
+     'no_blade': blade_returned,
+     'progress': build_progress,
+     'time': time},
+    target=layer_start_time,
+    rel=lambda time, **kw : time,
+    via=Rcheck_start_fusing,
+    edge_props=['LEVEL', 'DISPOSE_ALL'],
+)
+pbf_hg.add_edge(
+    {'keyframe': layer_start_time,
+     'time': time,
+     'finished': layer_fused},
+    target=laser_is_on,
+    rel=Rcheck_laser_on,
+    edge_props=['LEVEL', 'DISPOSE_ALL'],
+)
+pbf_hg.add_edge(
+    {'height': plate_position,
+     'bed_height': bed_height,
+     'thickness': plate_lowering_distance},
+    target=plate_is_lowered,
+    rel=Rcheck_if_plate_is_lowered,
+    disposable=['height'],
+)
+pbf_hg.add_edge(
+    {'height': hopper_position,
+     'prev_height': hopper_prev_position,
+     'thickness': hopper_raising_distance},
+    target=hopper_is_raised,
+    rel=Rcheck_if_hopper_is_raised,
+    index_via=lambda height, prev_height : height == prev_height + 1,
+    disposable=['height', 'prev_height'],
+)
+pbf_hg.add_edge(
+    sources=hopper_position,
+    target=hopper_prev_position,
+    rel=R.Rfirst,
+)
+pbf_hg.add_edge(
+    {'prev_height': hopper_position,
+     'thickness': hopper_raising_distance},
+    target=hopper_position,
+    rel=R.Rsum,
+    index_offset=1,
+    disposable=['prev_height'],
+)
+pbf_hg.add_edge(
+    {'step': plate_lowering_distance,
+     'count': layers_completed,
+     'start': plate_initial_position},
+    target=plate_position,
+    rel=Rcalc_vertical_position,
+    disposable='layers_completed',
+)
+pbf_hg.add_edge(
+    {'step': hopper_raising_distance,
+     'count': layers_completed,
+     'start': hopper_initial_position},
+    target=hopper_position,
+    rel=Rcalc_vertical_position,
+    disposable='layers_completed',
+)
+pbf_hg.add_edge(
+    {'layer_fused': layer_fused,
+     'plate_lowered': plate_is_lowered,
+     'hopper_raised': hopper_is_raised},
+    target=blade_is_leveling,
+    rel=R.Rall,
+    edge_props=['LEVEL', 'DISPOSE_ALL'],
+)
+pbf_hg.add_edge(
+    {'laser': laser_is_on,
+     'plate': plate_is_lowered,
+     'hopper': hopper_is_raised,
+     'bed': bed_is_leveled},
+    target=blade_is_clearing,
+    rel=lambda laser, plate, hopper, bed, **kw : 
+                all(plate, hopper, not laser, not bed),
+    edge_props=['LEVEL', 'DISPOSE_ALL'],
+)
+pbf_hg.add_edge(
+    {'laser': laser_is_on,
+     'plate': plate_is_lowered,
+     'hopper': hopper_is_raised,
+     'clearing': bed_is_leveled,
+     'home': blade_returned},
+    target=blade_is_returning,
+    rel=lambda laser, plate, hopper, bed, home, **kw : 
+                all(plate, hopper, not laser, bed, home),
+    edge_props=['LEVEL', 'DISPOSE_ALL'],
+)
+pbf_hg.add_edge(
+    {'prev': bed_is_leveled,
+     'firing': laser_is_on,
+     'clearing': blade_is_clearing,
+     'at_end': blade_at_end},
+    target=bed_is_leveled,
+    rel=Rcheck_if_bed_cleared,
+    index_offset=1,
+    edge_props=['LEVEL', 'DISPOSE_ALL'],
 )

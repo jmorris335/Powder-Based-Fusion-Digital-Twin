@@ -76,7 +76,7 @@ def plot_pbf(chamber_width: float, chamber_height: float, bed_height: float,
              build_plate_x_position: float, build_plate_y_position: float, 
              build_plate_width: float,
              build_progress: float=None, time: float=None, laser_is_on: bool=False,
-             tol: float=0.1):
+             tol: float=10):
     """Plots the powder-bed fusion machine."""
     fig, ax = plt.subplots()
     ax.add_collection(get_chamber_patches(chamber_width, chamber_height, bed_height, bin_width, tol))
@@ -98,9 +98,11 @@ def plot_pbf(chamber_width: float, chamber_height: float, bed_height: float,
     if time is not None:
         fontsize = 11
         ax.text(
-            x = 0, y = 0 - fontsize / 72 - tol,
+            x = 0, y = 0 - fontsize * (tol / 20) - tol,
             s=f'Time: {time:.2f} s',
+            va='top',
             fontsize=fontsize,
+            transform=ax.transData,
         )
 
     if laser_is_on:
