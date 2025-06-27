@@ -1,7 +1,7 @@
 import random
 
 from dts.pbf import pbf_hg
-from aux.plotter import visualization_caller
+from aux.plotter import visualization_caller, animation_caller
 
 inputs = dict(
     chamber_width=610,
@@ -40,14 +40,19 @@ debug_edges = [
 ]
 
 t = pbf_hg.solve(
-    'blade_position',
+    'bed_is_leveled',
     inputs,
-    min_index=12,
+    min_index=4,
     memory_mode=True,
+    # to_print=True,
     # debug_nodes=debug_nodes,
     # debug_edges=debug_edges,
     # logging_level=10,
 )
-print(t)
+print(t.print_tree())
+print(t.values['build_progress'])
+#ff0000: For some reason found values of build progress past index 1 aren't being collected in t.values
+
+# animation_caller(pbf_hg, inputs)
 
 # visualization_caller(pbf_hg)

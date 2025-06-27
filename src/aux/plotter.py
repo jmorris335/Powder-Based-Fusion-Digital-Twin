@@ -1,4 +1,4 @@
-from constrainthg import Hypergraph
+from constrainthg import Hypergraph, TNode
 import matplotlib.pyplot as plt
 from matplotlib.patches import Rectangle
 from matplotlib.collections import PatchCollection
@@ -13,12 +13,36 @@ def visualization_caller(hg: Hypergraph):
         if val is None:
             if kw in tnodes:
                 kwargs[kw] = tnodes[kw]
-    plot_pbf(**kwargs)
+    fig, ax = plt.subplots()
+    plot_pbf(ax, **kwargs)
+    plt.show()
+
+def animation_caller(hg: Hypergraph, inputs: dict, frames: int=20, 
+                     interval: float=0.5):
+    """Animates the PBF machine for the given inputs."""
+    t = hg.solve('bed_is_leveled', inputs, min_index=frames)
+    kwargs = filter_dict_to_kwargs(plot_pbf, inputs)
+
+    fig, ax = plt.subplots()
+    for frame in range(frames):
+        t_vals = {key : vals[frame] for key, vals in t.values.items() 
+                  if len(vals) > frame}
+        kwargs = kwargs | filter_dict_to_kwargs(plot_pbf, t_vals)
+
+        ax.clear()
+        plot_pbf(ax, **kwargs)
+        plt.pause(interval)
+
+    plt.show()
+        
 
 def filter_dict_to_kwargs(func, data: dict):
     """Return key-value pairs from data that match func's keyword arguments."""
     sig = inspect.signature(func)
-    keyword_types = (inspect.Parameter.POSITIONAL_OR_KEYWORD, inspect.Parameter.KEYWORD_ONLY)
+    keyword_types = (
+        inspect.Parameter.POSITIONAL_OR_KEYWORD,
+        inspect.Parameter.KEYWORD_ONLY
+    )
     valid_keys = [
         func_kw for func_kw, param in sig.parameters.items() 
         if param.kind in keyword_types
@@ -71,7 +95,7 @@ def get_laser_lines(x_center: float, y_top: float, height: float):
         lines.extend(plt.plot([x_center, x_end], [y_top, y_top - height], 'r-', lw=2))
     return lines
 
-def plot_pbf(chamber_width: float, chamber_height: float, bed_height: float,
+def plot_pbf(ax: plt.Axes, chamber_width: float, chamber_height: float, bed_height: float,
              bin_width: float,
              blade_position: float, blade_height: float, 
              hopper_x_position: float, hopper_y_position: float, hopper_width: float, 
@@ -79,7 +103,6 @@ def plot_pbf(chamber_width: float, chamber_height: float, bed_height: float,
              build_progress: float=None, time: float=None, laser_is_on: bool=False,
              tol: float=10):
     """Plots the powder-bed fusion machine."""
-    fig, ax = plt.subplots()
     ax.add_collection(get_chamber_patches(chamber_width, chamber_height, bed_height, bin_width, tol))
     ax.add_patch(get_blade_patch(blade_position, bed_height, blade_height))
     ax.add_patch(get_hopper_patch(hopper_x_position, hopper_y_position, hopper_width, bed_height))
@@ -116,7 +139,6 @@ def plot_pbf(chamber_width: float, chamber_height: float, bed_height: float,
     ax.set_ylim(-tol, chamber_height + tol)
     ax.set_aspect('equal')
     ax.axis('off')
-    plt.show()
 
 if __name__ == '__main__':
     plot_pbf(
