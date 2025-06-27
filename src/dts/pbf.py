@@ -5,7 +5,7 @@ from dts.chamber import chamber_hg
 from dts.part import part_hg
 from relations.relations import *
 
-pbf_hg = Hypergraph()
+pbf_hg = Hypergraph(no_weights=True)
 pbf_hg.union(pbf_hg, chamber_hg, part_hg)
 
 
@@ -57,18 +57,13 @@ layer_start_time = pbf_hg.add_node(Node(
     description='time current layer was first prepared for fusing',
     units='s',
 ))
-layer_build_times = part_hg.add_node(Node(
-    label='layer_build_times',
+layer_scan_times = part_hg.add_node(Node(
+    label='layer_scan_times',
     description='list of times to build each layer',
     units='List[s]',
 ))
-layer_build_time = part_hg.add_node(Node(
-    label='layer_build_time',
-    description='time to build current layer',
-    units='s',
-))
-scan_time = pbf_hg.add_node(Node(
-    label='scan_time',
+layer_scan_time = pbf_hg.add_node(Node(
+    label='layer_scan_time',
     description='time required to fuse current layer',
     units='s',
 ))
@@ -82,6 +77,11 @@ laser_is_on = pbf_hg.add_node(Node(
 layer_fused = pbf_hg.add_node(Node(
     label='layer_fused',
     description='true if current layer has been completely fused',
+    units='Boolean',
+))
+prev_layer_fused = pbf_hg.add_node(Node(
+    label='prev_layer_fused',
+    description='true if layer for previous index was completely fused',
     units='Boolean',
 ))
 
@@ -103,14 +103,14 @@ bed_is_cleared = pbf_hg.add_node(Node(
 ))
 
 ##    Build Plate    ###################################################
-plate_position = pbf_hg.add_node(Node(
-    label='plate_position',
-    description='distance from build plate to build plate',
+plate_y_position = pbf_hg.add_node(Node(
+    label='plate_y_position',
+    description='distance from bottom of chamber to build plate',
     units='mm',
 ))
-plate_initial_position = pbf_hg.add_node(Node(
-    label='plate_initial_position',
-    description='initial distance from build plate to build plate',
+plate_initial_y_position = pbf_hg.add_node(Node(
+    label='plate_initial_y_position',
+    description='initial distance from bottom of chamber to build plate',
     units='mm',
 ))
 plate_lowering_distance = pbf_hg.add_node(Node(
@@ -125,13 +125,13 @@ plate_is_lowered = pbf_hg.add_node(Node(
 ))
 
 ##    Hopper    ########################################################
-hopper_initial_position = pbf_hg.add_node(Node(
-    label='hopper_initial_position',
+hopper_initial_y_position = pbf_hg.add_node(Node(
+    label='hopper_initial_y_position',
     description='initial distance from hopper floor to build plate',
     units='mm',
 ))
-hopper_position = pbf_hg.add_node(Node(
-    label='hopper_position',
+hopper_y_position = pbf_hg.add_node(Node(
+    label='hopper_y_position',
     description='distance from bed surface to hopper floor (usually negative)',
     units='mm',
 ))
@@ -210,20 +210,40 @@ pbf_hg.add_edge(
 )
 pbf_hg.add_edge(
     {'index': layers_completed,
-     'times': layer_build_time},
-    target=layer_build_time,
+     'times': layer_scan_times},
+    target=layer_scan_time,
     rel=lambda index, times, **kw : times[index],
+    via=lambda times, index, **kw : index < len(times),
+    disposable='index',
+)
+pbf_hg.add_edge(
+    {'index': layers_completed,
+     'times': layer_scan_times},
+    target=layer_start_time,
+    rel=lambda index, times, **kw : sum(times[:index]),
     via=lambda times, index, **kw : index < len(times),
     disposable='index',
 )
 
 ##    Build Process    #################################################
 pbf_hg.add_edge(
-    {'scan_time': scan_time,
+    {'scan_time': layer_scan_time,
      'keyframe': layer_start_time,
      'time': time},
     target=layer_fused,
     rel=Rlayer_finished_scanning,
+    edge_props=['LEVEL', 'DISPOSE_ALL'],
+)
+pbf_hg.add_edge(
+    sources=layer_fused,
+    target=prev_layer_fused,
+    rel=R.Rfirst,
+)
+pbf_hg.add_edge(
+    {'fused': layer_fused,
+     'prev_fused': prev_layer_fused},
+    target=layers_completed,
+    rel=Rtrigger_finished_scanning,
     edge_props=['LEVEL', 'DISPOSE_ALL'],
 )
 pbf_hg.add_edge(
@@ -245,7 +265,7 @@ pbf_hg.add_edge(
     edge_props=['LEVEL', 'DISPOSE_ALL'],
 )
 pbf_hg.add_edge(
-    {'height': plate_position,
+    {'height': plate_y_position,
      'bed_height': bed_height,
      'thickness': plate_lowering_distance},
     target=plate_is_lowered,
@@ -253,23 +273,23 @@ pbf_hg.add_edge(
     disposable=['height'],
 )
 pbf_hg.add_edge(
-    {'height': hopper_position,
+    {'height': hopper_y_position,
      'prev_height': hopper_prev_position,
      'thickness': hopper_raising_distance},
     target=hopper_is_raised,
     rel=Rcheck_if_hopper_is_raised,
-    index_via=lambda height, prev_height : height == prev_height + 1,
+    index_via=lambda height, prev_height, **kw : height == prev_height + 1,
     disposable=['height', 'prev_height'],
 )
 pbf_hg.add_edge(
-    sources=hopper_position,
+    sources=hopper_y_position,
     target=hopper_prev_position,
     rel=R.Rfirst,
 )
 pbf_hg.add_edge(
-    {'prev_height': hopper_position,
+    {'prev_height': hopper_y_position,
      'thickness': hopper_raising_distance},
-    target=hopper_position,
+    target=hopper_y_position,
     rel=R.Rsum,
     index_offset=1,
     disposable=['prev_height'],
@@ -277,16 +297,16 @@ pbf_hg.add_edge(
 pbf_hg.add_edge(
     {'step': plate_lowering_distance,
      'count': layers_completed,
-     'start': plate_initial_position},
-    target=plate_position,
+     'start': plate_initial_y_position},
+    target=plate_y_position,
     rel=Rcalc_vertical_position,
     disposable='layers_completed',
 )
 pbf_hg.add_edge(
     {'step': hopper_raising_distance,
      'count': layers_completed,
-     'start': hopper_initial_position},
-    target=hopper_position,
+     'start': hopper_initial_y_position},
+    target=hopper_y_position,
     rel=Rcalc_vertical_position,
     disposable='layers_completed',
 )

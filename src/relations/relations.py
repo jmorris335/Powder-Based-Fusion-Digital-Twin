@@ -30,6 +30,12 @@ def Rcheck_start_fusing(leveled: bool, no_blade: bool, progress: float,
     ready = progress < 99.999
     return ready
 
+def Rtrigger_finished_scanning(fused: float, prev_fused: float, 
+                             *args, **kwargs)-> bool:
+    """Returns true if the layer just switched from unfused to fused."""
+    unfused_to_fused = fused and not prev_fused
+    return unfused_to_fused
+
 def Rcheck_laser_on(keyframe: float, time: float, finished: bool, 
                     *args, **kwargs)->bool:
     """Returns true if the laser is on."""

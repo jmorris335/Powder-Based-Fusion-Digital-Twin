@@ -45,8 +45,10 @@ def get_build_plate_patch(x_position: float, y_position: float, width: float,
     plate = Rectangle(xy, width, height, fill=False, ec='#008822', lw=2)
     return plate
 
-def get_hopper_patch(x_position: float, y_position: float, width: float, height: float):
+def get_hopper_patch(x_position: float, rel_y_position: float, width: float, bed_height: float):
     """Returns a patch for the hopper."""
+    y_position = bed_height + rel_y_position
+    height = abs(rel_y_position)
     xy = (x_position, y_position)
     hopper = Rectangle(xy, width, height, fill=False, ec='b', lw=2)
     return hopper
@@ -73,20 +75,19 @@ def plot_pbf(chamber_width: float, chamber_height: float, bed_height: float,
              bin_width: float,
              blade_position: float, blade_height: float, 
              hopper_x_position: float, hopper_y_position: float, hopper_width: float, 
-             build_plate_x_position: float, build_plate_y_position: float, 
-             build_plate_width: float,
+             plate_x_position: float, plate_y_position: float, plate_width: float,
              build_progress: float=None, time: float=None, laser_is_on: bool=False,
              tol: float=10):
     """Plots the powder-bed fusion machine."""
     fig, ax = plt.subplots()
     ax.add_collection(get_chamber_patches(chamber_width, chamber_height, bed_height, bin_width, tol))
     ax.add_patch(get_blade_patch(blade_position, bed_height, blade_height))
-    ax.add_patch(get_hopper_patch(hopper_x_position, hopper_y_position, hopper_width, bed_height - hopper_y_position))
-    ax.add_patch(get_build_plate_patch(build_plate_x_position, build_plate_y_position, build_plate_width, bed_height - build_plate_y_position))
+    ax.add_patch(get_hopper_patch(hopper_x_position, hopper_y_position, hopper_width, bed_height))
+    ax.add_patch(get_build_plate_patch(plate_x_position, plate_y_position, plate_width, bed_height - plate_y_position))
     
     if build_progress is not None:
-        text_x = build_plate_x_position + build_plate_width / 2
-        text_y = build_plate_y_position + (bed_height - build_plate_y_position) / 2
+        text_x = plate_x_position + plate_width / 2
+        text_y = plate_y_position + (bed_height - plate_y_position) / 2
         ax.text(
             x=text_x, y=text_y,
             s=f'Build Progress:\n{build_progress:.0f}%',
@@ -128,9 +129,9 @@ if __name__ == '__main__':
         hopper_x_position=4,
         hopper_y_position=1.4,
         hopper_width=2,
-        build_plate_x_position=2,
-        build_plate_y_position=2.1,
-        build_plate_width=2,
+        plate_x_position=2,
+        plate_y_position=2.1,
+        plate_width=2,
         time=3.71,
         build_progress=81.3,
         laser_is_on=True,
