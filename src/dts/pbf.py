@@ -25,6 +25,11 @@ time = pbf_hg.add_node(Node(
     description='current time of process',
     units='s',
 ))
+build_time = pbf_hg.add_node(Node(
+    label='build_time',
+    description='time to build part',
+    units='s',
+))
 
 ##    Material    ######################################################
 amount_in_stock = pbf_hg.add_node(Node(
@@ -96,11 +101,6 @@ bed_is_leveled = pbf_hg.add_node(Node(
     description='true if bed is ready for fusion to begin',
     units='Boolean',
 ))
-bed_is_cleared = pbf_hg.add_node(Node(
-    label='bed_is_cleared',
-    description='true if bed has been cleared',
-    units='Boolean',
-))
 
 ##    Build Plate    ###################################################
 plate_y_position = pbf_hg.add_node(Node(
@@ -152,6 +152,11 @@ hopper_is_raised = pbf_hg.add_node(Node(
 ))
 
 ##    Blade    #########################################################
+leveling_time = pbf_hg.add_node(Node(
+    label='leveling_time',
+    description='Nominal duration of leveling process',
+    units='s',
+))
 blade_is_leveling = pbf_hg.add_node(Node(
     label='blade_is_leveling',
     description='true if the blade is currently moving',
@@ -217,12 +222,10 @@ pbf_hg.add_edge(
     disposable='index',
 )
 pbf_hg.add_edge(
-    {'index': layers_completed,
-     'times': layer_scan_times},
-    target=layer_start_time,
-    rel=lambda index, times, **kw : sum(times[:index]),
-    via=lambda times, index, **kw : index < len(times),
-    disposable='index',
+    {'scan_times': layer_scan_times,
+     'leveling_time': leveling_time},
+    target=build_time,
+    rel=Rcalc_build_time,
 )
 
 ##    Build Process    #################################################
@@ -232,28 +235,32 @@ pbf_hg.add_edge(
      'time': time},
     target=layer_fused,
     rel=Rlayer_finished_scanning,
+    index_offset=1,
     edge_props=['LEVEL', 'DISPOSE_ALL'],
 )
 pbf_hg.add_edge(
-    sources=layer_fused,
+    {'fused': layer_fused},
     target=prev_layer_fused,
     rel=R.Rfirst,
+    index_via=R.geq('fused', 2)
 )
 pbf_hg.add_edge(
     {'fused': layer_fused,
      'prev_fused': prev_layer_fused},
     target=layers_completed,
     rel=Rtrigger_finished_scanning,
-    edge_props=['LEVEL', 'DISPOSE_ALL'],
+    index_via=lambda fused, prev_fused, **kw : fused == prev_fused + 1,
+    edge_props=['DISPOSE_ALL'],
 )
 pbf_hg.add_edge(
-    {'leveled': bed_is_leveled,
-     'no_blade': blade_returned,
+    {'laser_on': laser_is_on,
+     'leveled': bed_is_leveled,
      'progress': build_progress,
-     'time': time},
+     'time': time,
+     'prev_start': layer_start_time},
     target=layer_start_time,
-    rel=lambda time, **kw : time,
-    via=Rcheck_start_fusing,
+    rel=Rcalc_fusing_start_time,
+    index_offset=1,
     edge_props=['LEVEL', 'DISPOSE_ALL'],
 )
 pbf_hg.add_edge(
@@ -267,6 +274,7 @@ pbf_hg.add_edge(
 pbf_hg.add_edge(
     {'height': plate_y_position,
      'bed_height': bed_height,
+     'num_layers': layers_completed,
      'thickness': plate_lowering_distance},
     target=plate_is_lowered,
     rel=Rcheck_if_plate_is_lowered,
@@ -285,14 +293,6 @@ pbf_hg.add_edge(
     sources=hopper_y_position,
     target=hopper_prev_position,
     rel=R.Rfirst,
-)
-pbf_hg.add_edge(
-    {'prev_height': hopper_y_position,
-     'thickness': hopper_raising_distance},
-    target=hopper_y_position,
-    rel=R.Rsum,
-    index_offset=1,
-    disposable=['prev_height'],
 )
 pbf_hg.add_edge(
     {'step': plate_lowering_distance,
@@ -316,27 +316,10 @@ pbf_hg.add_edge(
      'hopper_raised': hopper_is_raised},
     target=blade_is_leveling,
     rel=R.Rall,
-    edge_props=['LEVEL', 'DISPOSE_ALL'],
-)
-pbf_hg.add_edge(
-    {'laser': laser_is_on,
-     'plate': plate_is_lowered,
-     'hopper': hopper_is_raised,
-     'bed': bed_is_leveled},
-    target=blade_is_clearing,
-    rel=lambda laser, plate, hopper, bed, **kw : 
-                all(plate, hopper, not laser, not bed),
-    edge_props=['LEVEL', 'DISPOSE_ALL'],
-)
-pbf_hg.add_edge(
-    {'laser': laser_is_on,
-     'plate': plate_is_lowered,
-     'hopper': hopper_is_raised,
-     'clearing': bed_is_leveled,
-     'home': blade_returned},
-    target=blade_is_returning,
-    rel=lambda laser, plate, hopper, bed, home, **kw : 
-                all(plate, hopper, not laser, bed, home),
+    #FIXME: hopper_is_raised is at a higher index initially
+    # index_via=lambda layer_fused, plate_lowered, hopper_raised, **kw :
+    #     layer_fused == plate_lowered and hopper_raised == plate_lowered + 1,
+    # edge_props=['DISPOSE_ALL'],
     edge_props=['LEVEL', 'DISPOSE_ALL'],
 )
 pbf_hg.add_edge(
@@ -345,7 +328,28 @@ pbf_hg.add_edge(
      'clearing': blade_is_clearing,
      'at_end': blade_at_end},
     target=bed_is_leveled,
-    rel=Rcheck_if_bed_cleared,
+    rel=Rcheck_if_bed_leveled,
     index_offset=1,
+    edge_props=['LEVEL', 'DISPOSE_ALL'],
+)
+pbf_hg.add_edge(
+    {'laser': laser_is_on,
+     'plate': plate_is_lowered,
+     'hopper': hopper_is_raised,
+     'bed': bed_is_leveled},
+    target=blade_is_clearing,
+    rel=Rcheck_blade_is_clearing,
+    label='check_blade_is_clearing',
+    edge_props=['LEVEL', 'DISPOSE_ALL'],
+)
+pbf_hg.add_edge(
+    {'laser': laser_is_on,
+     'plate': plate_is_lowered,
+     'hopper': hopper_is_raised,
+     'clearing': blade_is_clearing,
+     'home': blade_returned},
+    target=blade_is_returning,
+    rel=lambda laser, plate, hopper, clearing, home, **kw : 
+                all([plate, hopper, not laser, clearing, home]),
     edge_props=['LEVEL', 'DISPOSE_ALL'],
 )

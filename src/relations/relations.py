@@ -22,13 +22,12 @@ def Rlayer_finished_scanning(scan_time: float, keyframe: float, time: float,
     done = time >= scan_time + keyframe
     return done
 
-def Rcheck_start_fusing(leveled: bool, no_blade: bool, progress: float, 
-                        *args, **kwargs)-> bool:
-    """Returns true if the PBF machine is prepared to start fusion."""
-    if not all(leveled, no_blade):
-        return False
-    ready = progress < 99.999
-    return ready
+def Rcalc_fusing_start_time(laser_on: bool, leveled: bool, progress: float,
+                       time: float, prev_start: float, *args, **kwargs)-> bool:
+    """Returns the time that fusion began for the current layer."""
+    if not all([not laser_on, leveled, progress < 99.999]):
+        return time
+    return prev_start
 
 def Rtrigger_finished_scanning(fused: float, prev_fused: float, 
                              *args, **kwargs)-> bool:
@@ -42,10 +41,11 @@ def Rcheck_laser_on(keyframe: float, time: float, finished: bool,
     laser_on = time >= keyframe and not finished
     return laser_on
 
-def Rcheck_if_plate_is_lowered(height: float, bed_height: float, thickness: float, 
-                               *args, **kwargs)-> bool:
-    """Returns true if the plate is lowered sufficiently below the bed."""
-    is_lowered = height <= bed_height - thickness
+def Rcheck_if_plate_is_lowered(height: float, bed_height: float, num_layers: int,
+                               thickness: float, *args, **kwargs)-> bool:
+    """Returns true if the plate is lowered sufficiently below the bed for leveling."""
+    build_offset = thickness * (num_layers + 1)
+    is_lowered = height <= bed_height + build_offset
     return is_lowered
 
 def Rcheck_if_hopper_is_raised(height: float, prev_height: float, thickness: float,
@@ -57,7 +57,7 @@ def Rcheck_if_hopper_is_raised(height: float, prev_height: float, thickness: flo
 def Rcalc_vertical_position(step: float, count: int, start: float,
                             *args, **kwargs)-> float:
     """Returns current position of a vertical displacing surface."""
-    position = start + step + count
+    position = start + step * count
     return position
 
 def Rcalc_blade_returned(rel_position: float, *args, **kwargs)-> bool:
@@ -71,11 +71,31 @@ def Rcalc_blade_rel_position(home: float, end: float, position: float,
     prop = (position - home) / (end - home)
     return prop
 
-def Rcheck_if_bed_cleared(prev: bool, firing: bool, clearing: bool, at_end: bool,
+def Rcheck_blade_is_clearing(laser: bool, plate: bool, hopper: bool, bed: bool,
+                             *args, **kwargs)-> bool: 
+    """Returns true if the blade is clearing."""
+    clearing = all([plate, hopper, not laser, not bed])
+    return clearing
+
+def Rcheck_if_bed_leveled(prev: bool, firing: bool, clearing: bool, at_end: bool,
                           *args, **kwargs)-> bool:
-    """Returns true if the bed has been cleared."""
+    """Returns true if the bed has been leveled."""
     if firing:
         return False
     elif clearing and at_end:
         return True
     return prev
+
+def Rcalc_leveling_time(home: float, end: float, speed: float,
+                        *args, **kwargs)-> float:
+    """Calculates nominal time for leveling process."""
+    distance = abs(home - end) * 2
+    min_time = distance / speed
+    adj_time = min_time * 1.2
+    return adj_time
+
+def Rcalc_build_time(scan_times: list, leveling_time: float,
+                     *args, **kwargs)-> float:
+    """Calculates the total time to build the part."""
+    build_time = sum(scan_times) + leveling_time * len(scan_times)
+    return build_time

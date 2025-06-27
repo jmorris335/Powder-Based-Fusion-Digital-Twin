@@ -15,6 +15,11 @@ timestep = blade_hg.add_node(Node(
     description='smallest time unit considered',
     units='s',
 ))
+leveling_time = blade_hg.add_node(Node(
+    label='leveling_time',
+    description='Nominal duration of leveling process',
+    units='s',
+))
 blade_name = blade_hg.add_node(Node(
     label='blade_name',
     description='name for blade'
@@ -116,6 +121,15 @@ blade_hg.add_edge(
     disposable=['is_returning'],
 )
 blade_hg.add_edge(
+    {'is_clearing': blade_is_clearing,
+     'is_returning': blade_is_returning},
+    target=blade_velocity,
+    rel=lambda **kw : 0.,
+    via=lambda is_clearing, is_returning, **kw :
+        not is_clearing and not is_returning,
+    disposable=['LEVEL', 'DISPOSE_ALL'],
+)
+blade_hg.add_edge(
     {'rate': blade_velocity,
      'step': timestep,
      'initial': blade_position},
@@ -141,4 +155,11 @@ blade_hg.add_edge(
      'position': blade_position},
     target=blade_relative_position,
     rel=Rcalc_blade_rel_position,
+)
+blade_hg.add_edge(
+    {'home': blade_home_position,
+     'end': blade_end_position,
+     'speed': blade_max_velocity},
+    target=leveling_time,
+    rel=Rcalc_leveling_time,
 )
