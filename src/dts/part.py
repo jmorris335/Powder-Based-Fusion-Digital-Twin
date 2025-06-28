@@ -47,10 +47,12 @@ number_of_layers = part_hg.add_node(Node(
 # Edges
 part_hg.add_edge(
     {'time': time,
-     'total': build_time},
+     'total': build_time,
+     'unused': 'bed_is_leveled'},
     target=build_progress,
     rel=lambda time, total, **kw : time / total * 100,
-    disposable=['time'],
+    index_via=lambda time, unused, **kw : time == unused,
+    disposable=['time', 'unused'],
 )
 part_hg.add_edge(
     {'times' : layer_build_times},

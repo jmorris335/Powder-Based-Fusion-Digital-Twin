@@ -106,19 +106,23 @@ blade_at_end = blade_hg.add_node(Node(
 
 blade_hg.add_edge(
     {'is_clearing': blade_is_clearing,
-     'speed': blade_max_velocity},
-    target=blade_velocity,
-    rel=lambda speed, **kw : speed,
-    via=lambda is_clearing, **kw : is_clearing,
-    disposable=['is_clearing'],
-)
-blade_hg.add_edge(
-    {'is_returning': blade_is_returning,
+     'is_returning': blade_is_returning,
      'speed': blade_max_velocity},
     target=blade_velocity,
     rel=lambda speed, **kw : -speed,
-    via=lambda is_returning, **kw : is_returning,
-    disposable=['is_returning'],
+    via=lambda is_clearing, is_returning, **kw : is_clearing and not is_returning,
+    index_via=lambda is_clearing, is_returning, **kw : R.Rsame(is_clearing, is_returning),
+    disposable=['is_clearing', 'is_returning'],
+)
+blade_hg.add_edge(
+    {'is_clearing': blade_is_clearing,
+     'is_returning': blade_is_returning,
+     'speed': blade_max_velocity},
+    target=blade_velocity,
+    rel=lambda speed, **kw : speed,
+    via=lambda is_clearing, is_returning, **kw : not is_clearing and is_returning,
+    index_via=lambda is_clearing, is_returning, **kw : R.Rsame(is_clearing, is_returning),
+    disposable=['is_clearing', 'is_returning'],
 )
 blade_hg.add_edge(
     {'is_clearing': blade_is_clearing,
@@ -127,7 +131,7 @@ blade_hg.add_edge(
     rel=lambda **kw : 0.,
     via=lambda is_clearing, is_returning, **kw :
         not is_clearing and not is_returning,
-    disposable=['LEVEL', 'DISPOSE_ALL'],
+    edge_props=['LEVEL', 'DISPOSE_ALL'],
 )
 blade_hg.add_edge(
     {'rate': blade_velocity,

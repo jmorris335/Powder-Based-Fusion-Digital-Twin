@@ -22,10 +22,10 @@ def Rlayer_finished_scanning(scan_time: float, keyframe: float, time: float,
     done = time >= scan_time + keyframe
     return done
 
-def Rcalc_fusing_start_time(laser_on: bool, leveled: bool, progress: float,
-                       time: float, prev_start: float, *args, **kwargs)-> bool:
+def Rcalc_fusing_start_time(leveled: bool, progress: float, time: float,
+                            prev_start: float, *args, **kwargs)-> bool:
     """Returns the time that fusion began for the current layer."""
-    if not all([not laser_on, leveled, progress < 99.999]):
+    if all([leveled, progress < 99.999]):
         return time
     return prev_start
 
