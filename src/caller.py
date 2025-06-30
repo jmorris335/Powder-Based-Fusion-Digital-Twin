@@ -2,6 +2,7 @@ import random
 
 from dts.pbf import pbf_hg
 from aux.plotter import visualization_caller, animation_caller
+from aux.helper import *
 
 random.seed(3)
 
@@ -22,7 +23,7 @@ inputs = dict(
     hopper_width=200,
     hopper_is_raised=False,
     plate_x_position=200,
-    plate_initial_y_position=300,
+    height_tol=0.01,
     plate_width=200,
     plate_lowering_distance=-1,
     timestep=4.,
@@ -38,27 +39,31 @@ debug_nodes = [
     'blade_is_clearing',
 ]
 debug_edges = [
-    'check_blade_is_clearing',
+    'get_layers_completed',
 ]
 
 t = pbf_hg.solve(
-    'bed_is_leveled',
+    'layer_just_fused',
     inputs,
     min_index=8,
     memory_mode=True,
+    search_depth=2000,
     # to_print=True,
     # debug_nodes=debug_nodes,
     # debug_edges=debug_edges,
     # logging_level=10,
 )
-print(t.values['time'])
-print(t.values['layer_start_time'])
-print(t.values['layer_scan_times'][0][:1])
-print(t.values['layer_fused'])
-print(t.values['blade_position'])
-print(t.values['blade_velocity'])
-print(t.values['blade_is_clearing'])
-#ff0000: Blade clearing is turning off too quickly because the bed and plate are indicated as not prepared
+
+print_vals(t, 'time')
+print_vals(t, 'layer_start_time')
+print(f'scan times: {t.values['layer_scan_times'][0][:1]}')
+print_vals(t, 'layer_fused')
+print_vals(t, 'layers_completed')
+print_vals(t, 'blade_is_clearing')
+print_vals(t, 'bed_is_leveled')
+print_vals(t, 'blade_position')
+print_vals(t, 'blade_velocity')
+
 
 # animation_caller(pbf_hg, inputs)
 

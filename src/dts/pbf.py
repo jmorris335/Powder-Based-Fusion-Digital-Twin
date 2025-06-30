@@ -89,6 +89,11 @@ prev_layer_fused = pbf_hg.add_node(Node(
     description='true if layer for previous index was completely fused',
     units='Boolean',
 ))
+layer_just_fused = pbf_hg.add_node(Node(
+    label='layer_just_fused',
+    description='true if current layer was been fused on the current index',
+    units='Boolean',
+))
 
 ##    Bed    ###########################################################
 bed_height = pbf_hg.add_node(Node(
@@ -101,8 +106,14 @@ bed_is_leveled = pbf_hg.add_node(Node(
     description='true if bed is ready for fusion to begin',
     units='Boolean',
 ))
+height_tol = pbf_hg.add_node(Node(
+    label='height_tol',
+    description='tolerance for machine adjustments in height',
+    units='mm',
+))
 
 ##    Build Plate    ###################################################
+### There are two levels: leveling_level and fusiong_level
 plate_y_position = pbf_hg.add_node(Node(
     label='plate_y_position',
     description='distance from bottom of chamber to build plate',
@@ -118,9 +129,9 @@ plate_lowering_distance = pbf_hg.add_node(Node(
     description='distance plate lowers after fusion process',
     units='mm'
 ))
-plate_is_lowered = pbf_hg.add_node(Node(
-    label='plate_is_lowered',
-    description='true if bed is one level below current layer',
+plate_at_fusion_level = pbf_hg.add_node(Node(
+    label='plate_at_fusion_level',
+    description='true if plate is high enough for fusion/leveling process',
     units='Boolean',
 ))
 
@@ -133,11 +144,6 @@ hopper_initial_y_position = pbf_hg.add_node(Node(
 hopper_y_position = pbf_hg.add_node(Node(
     label='hopper_y_position',
     description='distance from bed surface to hopper floor (usually negative)',
-    units='mm',
-))
-hopper_prev_position = pbf_hg.add_node(Node(
-    label='hopper_prev_position',
-    description='previous distance from bed surface to hopper floor',
     units='mm',
 ))
 hopper_raising_distance = pbf_hg.add_node(Node(
@@ -247,9 +253,19 @@ pbf_hg.add_edge(
 pbf_hg.add_edge(
     {'fused': layer_fused,
      'prev_fused': prev_layer_fused},
-    target=layers_completed,
+    target=layer_just_fused,
     rel=Rtrigger_finished_scanning,
     index_via=lambda fused, prev_fused, **kw : fused == prev_fused + 1,
+    edge_props=['DISPOSE_ALL'],
+)
+pbf_hg.add_edge(
+    {'just_fused': layer_just_fused,
+     'prev_layers': layers_completed},
+    target=layers_completed,
+    label='get_layers_completed',
+    rel=Rget_layers_completed,
+    index_via=lambda just_fused, prev_layers, **kw :
+        just_fused == prev_layers + 1,
     edge_props=['DISPOSE_ALL'],
 )
 pbf_hg.add_edge(
@@ -268,31 +284,46 @@ pbf_hg.add_edge(
      'time': time,
      'finished': layer_fused},
     target=laser_is_on,
+    label='check_laser_on',
     rel=Rcheck_laser_on,
-    edge_props=['LEVEL', 'DISPOSE_ALL'],
+    index_via=lambda keyframe, time, finished, **kw :
+        keyframe == time and finished == time + 1,
+    edge_props=['DISPOSE_ALL'],
 )
 pbf_hg.add_edge(
     {'height': plate_y_position,
-     'bed_height': bed_height,
+     'initial': bed_height,
      'num_layers': layers_completed,
-     'thickness': plate_lowering_distance},
-    target=plate_is_lowered,
-    rel=Rcheck_if_plate_is_lowered,
-    disposable=['height'],
+     'step': plate_lowering_distance,
+     'tol': height_tol},
+    target=plate_at_fusion_level,
+    rel=Rcheck_plate_at_fusion_level,
+    index_via=lambda height, num_layers, **kw : R.Rsame(height, num_layers),
+    disposable=['height', 'num_layers'],
 )
+"""This is a good example of an assumption violated by a scope change.
+This edge assumes that there is a constant hopper_raising_distance for 
+each level of the print. If that assumption was violated (by some smart 
+adjustment algorithm perhaps), then the edge would not be able to handle
+the input data of multiple hopper_raising_distances, and would cease to 
+be valid.
+"""
 pbf_hg.add_edge(
     {'height': hopper_y_position,
-     'prev_height': hopper_prev_position,
-     'thickness': hopper_raising_distance},
+     'initial': hopper_initial_y_position,
+     'num_layers': layers_completed,
+     'step': hopper_raising_distance,
+     'tol': height_tol},
     target=hopper_is_raised,
-    rel=Rcheck_if_hopper_is_raised,
-    index_via=lambda height, prev_height, **kw : height == prev_height + 1,
-    disposable=['height', 'prev_height'],
+    rel=Rcheck_hopper_at_leveling_level,
+    index_via=lambda height, num_layers, **kw : R.Rsame(height, num_layers),
+    disposable=['height', 'num_layers'],
 )
 pbf_hg.add_edge(
-    sources=hopper_y_position,
-    target=hopper_prev_position,
-    rel=R.Rfirst,
+    {'start': bed_height,
+     'step': plate_lowering_distance},
+    target=plate_initial_y_position,
+    rel=R.Rsum,
 )
 pbf_hg.add_edge(
     {'step': plate_lowering_distance,
@@ -312,14 +343,10 @@ pbf_hg.add_edge(
 )
 pbf_hg.add_edge(
     {'layer_fused': layer_fused,
-     'plate_lowered': plate_is_lowered,
+     'plate_lowered': plate_at_fusion_level,
      'hopper_raised': hopper_is_raised},
     target=blade_is_leveling,
     rel=R.Rall,
-    #FIXME: hopper_is_raised is at a higher index initially
-    # index_via=lambda layer_fused, plate_lowered, hopper_raised, **kw :
-    #     layer_fused == plate_lowered and hopper_raised == plate_lowered + 1,
-    # edge_props=['DISPOSE_ALL'],
     edge_props=['LEVEL', 'DISPOSE_ALL'],
 )
 pbf_hg.add_edge(
@@ -328,13 +355,13 @@ pbf_hg.add_edge(
      'clearing': blade_is_clearing,
      'at_end': blade_at_end},
     target=bed_is_leveled,
-    rel=Rcheck_if_bed_leveled,
+    rel=Rcheck_bed_leveled,
     index_offset=1,
     edge_props=['LEVEL', 'DISPOSE_ALL'],
 )
 pbf_hg.add_edge(
     {'laser': laser_is_on,
-     'plate': plate_is_lowered,
+     'plate': plate_at_fusion_level,
      'hopper': hopper_is_raised,
      'bed': bed_is_leveled},
     target=blade_is_clearing,
@@ -344,7 +371,7 @@ pbf_hg.add_edge(
 )
 pbf_hg.add_edge(
     {'laser': laser_is_on,
-     'plate': plate_is_lowered,
+     'plate': plate_at_fusion_level,
      'hopper': hopper_is_raised,
      'clearing': blade_is_clearing,
      'home': blade_returned},
