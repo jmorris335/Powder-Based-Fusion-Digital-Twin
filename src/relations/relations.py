@@ -84,12 +84,6 @@ def Rcalc_blade_rel_position(home: float, end: float, position: float,
     prop = (position - home) / (end - home)
     return prop
 
-def Rcheck_blade_is_clearing(laser: bool, plate: bool, hopper: bool, bed: bool,
-                             *ar, **kw)-> bool: 
-    """Returns true if the blade is clearing."""
-    clearing = all([plate, hopper, not laser, not bed])
-    return clearing
-
 def Rcheck_bed_leveled(prev: bool, firing: bool, clearing: bool, at_end: bool,
                           *ar, **kw)-> bool:
     """Returns true if the bed has been leveled."""
@@ -112,3 +106,31 @@ def Rcalc_build_time(scan_times: list, leveling_time: float,
     """Calculates the total time to build the part."""
     build_time = sum(scan_times) + leveling_time * len(scan_times)
     return build_time
+
+def Rcheck_blade_is_leveling(fused: bool, plate: bool, hopper: bool, bed: bool,
+                             *ar, **kw)-> bool: 
+    """Returns true if the blade is clearing."""
+    leveling = all([plate, hopper, fused, not bed])
+    return leveling
+
+def Rcalc_blade_clearing_status(leveling: bool, returning: bool, rel_pos: float,
+                                prev_status: bool):
+    """Calculates if the blade is clearing."""
+    if any([not leveling, returning]):
+        return False
+    if rel_pos >= 1.:
+        return False
+    if rel_pos <= 0.:
+        return True
+    return prev_status
+
+def Rcalc_blade_returning_status(clearing: bool, rel_pos: float,
+                                prev_status: bool):
+    """Calculates if the blade is returning."""
+    if clearing:
+        return False
+    if rel_pos <= 0.:
+        return False
+    if rel_pos >= 1.:
+        return True
+    return prev_status

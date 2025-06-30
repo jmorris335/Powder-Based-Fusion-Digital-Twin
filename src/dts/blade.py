@@ -110,7 +110,8 @@ blade_hg.add_edge(
      'speed': blade_max_velocity},
     target=blade_velocity,
     rel=lambda speed, **kw : -speed,
-    via=lambda is_clearing, is_returning, **kw : is_clearing and not is_returning,
+    via=lambda is_clearing, is_returning, **kw :
+        is_clearing and not is_returning,
     index_via=lambda is_clearing, is_returning, **kw : R.Rsame(is_clearing, is_returning),
     disposable=['is_clearing', 'is_returning'],
 )
@@ -120,7 +121,8 @@ blade_hg.add_edge(
      'speed': blade_max_velocity},
     target=blade_velocity,
     rel=lambda speed, **kw : speed,
-    via=lambda is_clearing, is_returning, **kw : not is_clearing and is_returning,
+    via=lambda is_clearing, is_returning, **kw :
+        not is_clearing and is_returning,
     index_via=lambda is_clearing, is_returning, **kw : R.Rsame(is_clearing, is_returning),
     disposable=['is_clearing', 'is_returning'],
 )
@@ -166,4 +168,25 @@ blade_hg.add_edge(
      'speed': blade_max_velocity},
     target=leveling_time,
     rel=Rcalc_leveling_time,
+)
+blade_hg.add_edge(
+    {'leveling': blade_is_leveling,
+     'returning': blade_is_returning,
+     'rel_pos': blade_relative_position,
+     'prev_status': blade_is_clearing},
+    target=blade_is_clearing,
+    rel=Rcalc_blade_clearing_status,
+    label='check_blade_is_clearing',
+    index_offset=1,
+    edge_props=['LEVEL', 'DISPOSE_ALL'],
+)
+blade_hg.add_edge(
+    {'clearing': blade_is_clearing,
+     'rel_pos': blade_relative_position,
+     'prev_status': blade_is_returning},
+    target=blade_is_returning,
+    rel=Rcalc_blade_returning_status,
+    label='check_blade_is_returning',
+    index_offset=1,
+    edge_props=['LEVEL', 'DISPOSE_ALL'],
 )

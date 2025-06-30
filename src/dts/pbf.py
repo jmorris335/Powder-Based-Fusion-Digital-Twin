@@ -248,7 +248,6 @@ pbf_hg.add_edge(
     {'fused': layer_fused},
     target=prev_layer_fused,
     rel=R.Rfirst,
-    index_via=R.geq('fused', 2)
 )
 pbf_hg.add_edge(
     {'fused': layer_fused,
@@ -342,12 +341,16 @@ pbf_hg.add_edge(
     disposable='layers_completed',
 )
 pbf_hg.add_edge(
-    {'layer_fused': layer_fused,
-     'plate_lowered': plate_at_fusion_level,
-     'hopper_raised': hopper_is_raised},
+    {'fused': layer_fused,
+     'plate': plate_at_fusion_level,
+     'hopper': hopper_is_raised,
+     'bed': bed_is_leveled},
     target=blade_is_leveling,
-    rel=R.Rall,
-    edge_props=['LEVEL', 'DISPOSE_ALL'],
+    label='check_blade_is_leveling',
+    rel=Rcheck_blade_is_leveling,
+    index_via=lambda fused, plate, hopper, bed, **kw :
+        R.Rsame(fused-1, plate, hopper, bed),
+    edge_props=['DISPOSE_ALL'],
 )
 pbf_hg.add_edge(
     {'prev': bed_is_leveled,
@@ -357,26 +360,5 @@ pbf_hg.add_edge(
     target=bed_is_leveled,
     rel=Rcheck_bed_leveled,
     index_offset=1,
-    edge_props=['LEVEL', 'DISPOSE_ALL'],
-)
-pbf_hg.add_edge(
-    {'laser': laser_is_on,
-     'plate': plate_at_fusion_level,
-     'hopper': hopper_is_raised,
-     'bed': bed_is_leveled},
-    target=blade_is_clearing,
-    rel=Rcheck_blade_is_clearing,
-    label='check_blade_is_clearing',
-    edge_props=['LEVEL', 'DISPOSE_ALL'],
-)
-pbf_hg.add_edge(
-    {'laser': laser_is_on,
-     'plate': plate_at_fusion_level,
-     'hopper': hopper_is_raised,
-     'clearing': blade_is_clearing,
-     'home': blade_returned},
-    target=blade_is_returning,
-    rel=lambda laser, plate, hopper, clearing, home, **kw : 
-                all([plate, hopper, not laser, clearing, home]),
     edge_props=['LEVEL', 'DISPOSE_ALL'],
 )
