@@ -104,6 +104,7 @@ def plot_pbf(ax: plt.Axes, chamber_width: float, chamber_height: float, bed_heig
              tol: float=10):
     """Plots the powder-bed fusion machine."""
     ax.add_collection(get_chamber_patches(chamber_width, chamber_height, bed_height, bin_width, tol))
+    blade_position = max(0., min(chamber_width, blade_position))
     ax.add_patch(get_blade_patch(blade_position, bed_height, blade_height))
     ax.add_patch(get_hopper_patch(hopper_x_position, hopper_y_position, hopper_width, bed_height))
     ax.add_patch(get_build_plate_patch(plate_x_position, plate_y_position, plate_width, bed_height - plate_y_position))
