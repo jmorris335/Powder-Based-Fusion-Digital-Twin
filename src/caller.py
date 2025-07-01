@@ -14,7 +14,7 @@ inputs = dict(
     blade_home_position=590.,
     blade_end_position=10.,
     blade_height=50.,
-    blade_max_velocity=320.,
+    blade_max_velocity=120.,
     blade_is_leveling=False,
     blade_is_returning=False,
     blade_is_clearing=False,
@@ -33,7 +33,7 @@ inputs = dict(
     plate_width=200,
     plate_lowering_distance=-1,
     prev_layer_fused=True,
-    timestep=2,
+    timestep=1.,
     time=0.0,
 )
 
@@ -41,33 +41,37 @@ debug_nodes = [
     'blade_is_clearing',
 ]
 debug_edges = [
-    'check_blade_is_leveling',
+    'layer_finished_scanning',
 ]
 
 t = pbf_hg.solve(
-    'blade_velocity',
+    'layer_fused',
+    # 'layers_completed',
     inputs,
-    min_index=12,
-    memory_mode=True,
-    search_depth=3000,
+    min_index=3,
+    search_depth=50,
     # to_print=True,
     # debug_nodes=debug_nodes,
     # debug_edges=debug_edges,
     # logging_level=10,
 )
+print(t if t is not None else "No solutions")
 
-print_vals(t, 'time')
+# print_vals(t, 'time')
 print_vals(t, 'layer_start_time')
-print(f'scan times: {t.values['layer_scan_times'][0][:1]}')
-print_vals(t, 'layer_fused')
-print_vals(t, 'layers_completed')
+print_vals(t, 'bed_is_leveled')
+# print(f'scan times: {t.values['layer_scan_times'][0][:1]}')
+# print_vals(t, 'layer_fused')
+# print_vals(t, 'layers_completed')
 print_vals(t, 'blade_is_leveling')
 print_vals(t, 'blade_is_clearing')
-print_vals(t, 'blade_is_returning')
-print_vals(t, 'blade_velocity')
-print_vals(t, 'blade_position')
+# print_vals(t, 'blade_is_returning')
+# print_vals(t, 'blade_velocity')
+# print_vals(t, 'blade_position')
+# print_vals(t, 'blade_relative_position')
 
 
 # visualization_caller(pbf_hg)
 
-animation_caller(pbf_hg, inputs, frames=20)
+# animation_caller(pbf_hg, inputs, frames=100)
+#ff0000: The error is that our layer start keyframe isn't resetting between layers.

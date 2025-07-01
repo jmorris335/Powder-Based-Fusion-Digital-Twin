@@ -84,12 +84,12 @@ def Rcalc_blade_rel_position(home: float, end: float, position: float,
     prop = (position - home) / (end - home)
     return prop
 
-def Rcheck_bed_leveled(prev: bool, firing: bool, clearing: bool, at_end: bool,
+def Rcheck_bed_leveled(prev: bool, firing: bool, clearing: bool, rel_pos: float,
                           *ar, **kw)-> bool:
     """Returns true if the bed has been leveled."""
     if firing:
         return False
-    elif clearing and at_end:
+    elif clearing and rel_pos >= 0.9:
         return True
     return prev
 

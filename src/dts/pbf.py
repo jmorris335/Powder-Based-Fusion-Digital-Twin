@@ -193,6 +193,10 @@ blade_position = pbf_hg.add_node(Node(
     description='distance of blade from left of chamber',
     units='mm',
 ))
+blade_relative_position = pbf_hg.add_node(Node(
+    label='blade_relative_position',
+    description='proportion of blade location from home (0) to end (1) position',
+))
 blade_home_position = pbf_hg.add_node(Node(
     label='blade_home_position',
     description='home position for blade from left of chamber',
@@ -241,8 +245,12 @@ pbf_hg.add_edge(
      'time': time},
     target=layer_fused,
     rel=Rlayer_finished_scanning,
+    label='layer_finished_scanning',
     index_offset=1,
-    edge_props=['LEVEL', 'DISPOSE_ALL'],
+    #FIXME: Changed from 'LEVEL' to try and make sure keyframe was correctly compared (off by one error)
+    index_via=lambda scan_time, keyframe, time, **kw : 
+        scan_time == time and keyframe == time + 1,
+    edge_props=['DISPOSE_ALL'],
 )
 pbf_hg.add_edge(
     {'fused': layer_fused},
@@ -356,8 +364,9 @@ pbf_hg.add_edge(
     {'prev': bed_is_leveled,
      'firing': laser_is_on,
      'clearing': blade_is_clearing,
-     'at_end': blade_at_end},
+     'rel_pos': blade_relative_position},
     target=bed_is_leveled,
+    label='check_bed_leveled',
     rel=Rcheck_bed_leveled,
     index_offset=1,
     edge_props=['LEVEL', 'DISPOSE_ALL'],
