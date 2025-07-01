@@ -48,7 +48,7 @@ debug_edges = [
 t = pbf_hg.solve(
     'blade_position',
     inputs,
-    min_index=10,
+    min_index=3,
     search_depth=500,
     # to_print=True,
     # debug_nodes=debug_nodes,
@@ -69,7 +69,7 @@ print(t if t is not None else "No solutions")
 # print_vals(t, 'blade_is_returning')
 # print_vals(t, 'blade_velocity')
 # print_vals(t, 'blade_position')
-# # print_vals(t, 'blade_relative_position')
+# print_vals(t, 'blade_relative_position')
 
 
 # visualization_caller(pbf_hg)
