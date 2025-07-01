@@ -16,12 +16,6 @@ def Reulerian_integration(rate: float, step: float, initial: float,
     out = initial + rate * step
     return out
 
-def Rlayer_finished_scanning(scan_time: float, keyframe: float, time: float, 
-                             *ar, **kw)-> bool:
-    """Returns true if the layer is finished scanning."""
-    done = time >= scan_time + keyframe
-    return done
-
 def Rcalc_fusing_start_time(leveled: bool, progress: float, time: float,
                             prev_start: float, *ar, **kw)-> bool:
     """Returns the time that fusion began for the current layer."""
@@ -29,10 +23,23 @@ def Rcalc_fusing_start_time(leveled: bool, progress: float, time: float,
         return time
     return prev_start
 
-def Rtrigger_finished_scanning(fused: float, prev_fused: float, *ar, **kw)-> bool:
-    """Returns true if the layer just switched from unfused to fused."""
-    unfused_to_fused = fused and not prev_fused
-    return unfused_to_fused
+def Rcalc_fusing_end_time(leveled: bool, scan_time: float, start: float,
+                          prev: float, *ar, **kw)-> bool:
+    """Returns the time that fusion should end for the current layer."""
+    if not leveled:
+        return prev
+    return scan_time + start
+
+def Rlayer_finished_scanning(scan_end_time: float, time: float, *ar, **kw)-> bool:
+    """Returns true if the layer is finished scanning."""
+    done = time >= scan_end_time
+    return done
+
+def Rcheck_event_just_happened(step: float, time: float, keyframe: float,
+                               *ar, **kw)-> bool:
+    """Returns true if event at the time `keyframe` happened in the previous 
+    time step. Not assumes that time increments linearly by the time step."""
+    return time > keyframe and time < step + keyframe
 
 def Rget_layers_completed(just_fused: bool, prev_layers: int,*ar, **kw)-> int:
     """Returns the number of layers completed at the current time step."""
@@ -60,12 +67,6 @@ def Rcheck_hopper_at_leveling_level(height: float, initial: float, num_layers: i
     dispensing_height = initial + built_offset
     is_raised = abs(height - dispensing_height) < tol
     return is_raised
-
-# def Rcheck_hopper_is_raised(height: float, prev_height: float, thickness: float,
-#                                *ar, **kw)-> bool:
-#     """Returns true if the hopper is raised sufficiently above the bed."""
-#     is_raised = height >= prev_height + thickness
-#     return is_raised
 
 def Rcalc_vertical_position(step: float, count: int, start: float,
                             *ar, **kw)-> float:

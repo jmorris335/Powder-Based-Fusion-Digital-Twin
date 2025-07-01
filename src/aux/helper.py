@@ -4,4 +4,11 @@ def print_vals(t, key: str):
         pass
         # print(f'No values found for {key}')
     else:
-        print(f'{key}: {t.values[key]}')
+        out = f'{key}: '
+        for val in t.values[key]:
+            if isinstance(val, float):
+                val = f'{val:.2f}'
+                if val[-3:] == '.00':
+                    val = val[:-2]
+            out += f'{val}, '
+        print(out)

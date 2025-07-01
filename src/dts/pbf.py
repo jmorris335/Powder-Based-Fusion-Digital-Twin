@@ -57,11 +57,6 @@ build_progress = part_hg.add_node(Node(
     description='proportion of build completed',
     units='%',
 ))
-layer_start_time = pbf_hg.add_node(Node(
-    label='layer_start_time',
-    description='time current layer was first prepared for fusing',
-    units='s',
-))
 layer_scan_times = part_hg.add_node(Node(
     label='layer_scan_times',
     description='list of times to build each layer',
@@ -74,6 +69,16 @@ layer_scan_time = pbf_hg.add_node(Node(
 ))
 
 ##    Laser    #########################################################
+scan_start_time = pbf_hg.add_node(Node(
+    label='scan_start_time',
+    description='time current layer was first prepared for fusing',
+    units='s',
+))
+scan_end_time = pbf_hg.add_node(Node(
+    label='scan_end_time',
+    description='time fusing should end for current layer',
+    units='s',
+))
 laser_is_on = pbf_hg.add_node(Node(
     label='laser_is_on',
     description='true if laser is on',
@@ -82,11 +87,6 @@ laser_is_on = pbf_hg.add_node(Node(
 layer_fused = pbf_hg.add_node(Node(
     label='layer_fused',
     description='true if current layer has been completely fused',
-    units='Boolean',
-))
-prev_layer_fused = pbf_hg.add_node(Node(
-    label='prev_layer_fused',
-    description='true if layer for previous index was completely fused',
     units='Boolean',
 ))
 layer_just_fused = pbf_hg.add_node(Node(
@@ -113,7 +113,6 @@ height_tol = pbf_hg.add_node(Node(
 ))
 
 ##    Build Plate    ###################################################
-### There are two levels: leveling_level and fusiong_level
 plate_y_position = pbf_hg.add_node(Node(
     label='plate_y_position',
     description='distance from bottom of chamber to build plate',
@@ -241,29 +240,38 @@ pbf_hg.add_edge(
 ##    Build Process    #################################################
 pbf_hg.add_edge(
     {'scan_time': layer_scan_time,
-     'keyframe': layer_start_time,
+    'time':time},
+    target=scan_end_time,
+    rel=R.Rsum,
+    index_via=lambda scan_time, time, **kw : time == 1 and scan_time == 1,
+    edge_props=['DISPOSE_ALL'],
+)
+pbf_hg.add_edge(
+    {'leveled': bed_is_leveled,
+     'scan_time': layer_scan_time,
+     'start': scan_start_time,
+     'prev': scan_end_time},
+    target=scan_end_time,
+    rel=Rcalc_fusing_end_time,
+    index_offset=1,
+    edge_props=['LEVEL', 'DISPOSE_ALL'],
+)
+pbf_hg.add_edge(
+    {'scan_end_time': scan_end_time,
      'time': time},
     target=layer_fused,
     rel=Rlayer_finished_scanning,
     label='layer_finished_scanning',
-    index_offset=1,
-    #FIXME: Changed from 'LEVEL' to try and make sure keyframe was correctly compared (off by one error)
-    index_via=lambda scan_time, keyframe, time, **kw : 
-        scan_time == time and keyframe == time + 1,
-    edge_props=['DISPOSE_ALL'],
+    edge_props=['LEVEL', 'DISPOSE_ALL'],
 )
 pbf_hg.add_edge(
-    {'fused': layer_fused},
-    target=prev_layer_fused,
-    rel=R.Rfirst,
-)
-pbf_hg.add_edge(
-    {'fused': layer_fused,
-     'prev_fused': prev_layer_fused},
+    {'step': timestep,
+     'time': time,
+     'keyframe': scan_end_time},
     target=layer_just_fused,
-    rel=Rtrigger_finished_scanning,
-    index_via=lambda fused, prev_fused, **kw : fused == prev_fused + 1,
-    edge_props=['DISPOSE_ALL'],
+    rel=Rcheck_event_just_happened,
+    index_via=lambda time, keyframe, **kw : R.Rsame(time, keyframe),
+    disposable=['time', 'keyframe'],
 )
 pbf_hg.add_edge(
     {'just_fused': layer_just_fused,
@@ -271,31 +279,27 @@ pbf_hg.add_edge(
     target=layers_completed,
     label='get_layers_completed',
     rel=Rget_layers_completed,
-    index_via=lambda just_fused, prev_layers, **kw :
-        just_fused == prev_layers + 1,
-    edge_props=['DISPOSE_ALL'],
+    index_offset=1,
+    edge_props=['LEVEL', 'DISPOSE_ALL'],
 )
 pbf_hg.add_edge(
-    {'laser_on': laser_is_on,
-     'leveled': bed_is_leveled,
+    {'leveled': bed_is_leveled,
      'progress': build_progress,
      'time': time,
-     'prev_start': layer_start_time},
-    target=layer_start_time,
+     'prev_start': scan_start_time},
+    target=scan_start_time,
     rel=Rcalc_fusing_start_time,
     index_offset=1,
     edge_props=['LEVEL', 'DISPOSE_ALL'],
 )
 pbf_hg.add_edge(
-    {'keyframe': layer_start_time,
+    {'keyframe': scan_start_time,
      'time': time,
      'finished': layer_fused},
     target=laser_is_on,
     label='check_laser_on',
     rel=Rcheck_laser_on,
-    index_via=lambda keyframe, time, finished, **kw :
-        keyframe == time and finished == time + 1,
-    edge_props=['DISPOSE_ALL'],
+    edge_props=['LEVEL', 'DISPOSE_ALL'],
 )
 pbf_hg.add_edge(
     {'height': plate_y_position,
@@ -356,9 +360,7 @@ pbf_hg.add_edge(
     target=blade_is_leveling,
     label='check_blade_is_leveling',
     rel=Rcheck_blade_is_leveling,
-    index_via=lambda fused, plate, hopper, bed, **kw :
-        R.Rsame(fused-1, plate, hopper, bed),
-    edge_props=['DISPOSE_ALL'],
+    edge_props=['LEVEL', 'DISPOSE_ALL'],
 )
 pbf_hg.add_edge(
     {'prev': bed_is_leveled,

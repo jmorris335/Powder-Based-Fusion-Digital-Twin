@@ -112,7 +112,8 @@ blade_hg.add_edge(
     rel=lambda speed, **kw : -speed,
     via=lambda is_clearing, is_returning, **kw :
         is_clearing and not is_returning,
-    index_via=lambda is_clearing, is_returning, **kw : R.Rsame(is_clearing, is_returning),
+    index_via=lambda is_clearing, is_returning, **kw :
+        R.Rsame(is_clearing, is_returning),
     disposable=['is_clearing', 'is_returning'],
 )
 blade_hg.add_edge(
@@ -123,7 +124,8 @@ blade_hg.add_edge(
     rel=lambda speed, **kw : speed,
     via=lambda is_clearing, is_returning, **kw :
         not is_clearing and is_returning,
-    index_via=lambda is_clearing, is_returning, **kw : R.Rsame(is_clearing, is_returning),
+    index_via=lambda is_clearing, is_returning, **kw :
+        R.Rsame(is_clearing, is_returning),
     disposable=['is_clearing', 'is_returning'],
 )
 blade_hg.add_edge(
@@ -141,8 +143,8 @@ blade_hg.add_edge(
      'initial': blade_position},
     target=blade_position,
     rel=Reulerian_integration,
-    index_offset=1,
-    index_via=lambda rate, initial, **kw : R.Rsame(rate, initial),
+    # index_via=lambda rate, initial, **kw : R.Rsame(rate, initial),
+    index_via=lambda rate, initial, **kw : rate == initial + 1,
     disposable=['rate', 'initial'],
 )
 blade_hg.add_edge(
