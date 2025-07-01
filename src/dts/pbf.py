@@ -31,17 +31,6 @@ build_time = pbf_hg.add_node(Node(
     units='s',
 ))
 
-##    Material    ######################################################
-amount_in_stock = pbf_hg.add_node(Node(
-    label='amount_in_stock',
-    description='amount of material remaining in stock',
-    units='g',
-))
-current_material = pbf_hg.add_node(Node(
-    label='current_material',
-    description='name of material currently loaded in chamber',
-))
-
 ##    Layers    ########################################################
 layer_thickness = pbf_hg.add_node(Node(
     label='layer_thickness',

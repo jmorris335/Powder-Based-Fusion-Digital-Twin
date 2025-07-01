@@ -28,6 +28,7 @@ inputs = dict(
     laser_is_on=True,
     layer_scan_times=[5. + 4 * random.random() for i in range(30)],
     layers_completed=0,
+    material_density=0.0027,
     scan_start_time=0.0,
     plate_x_position=200,
     plate_width=200,
