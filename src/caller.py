@@ -14,7 +14,7 @@ inputs = dict(
     blade_home_position=590.,
     blade_end_position=10.,
     blade_height=50.,
-    blade_max_velocity=120.,
+    blade_max_velocity=350.,
     blade_is_leveling=False,
     blade_is_returning=False,
     blade_is_clearing=False,
@@ -73,4 +73,4 @@ print(t if t is not None else "No solutions")
 
 # visualization_caller(pbf_hg)
 
-animation_caller(pbf_hg, inputs, frames=100)
+animation_caller(pbf_hg, inputs, frames=101)

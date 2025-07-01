@@ -365,7 +365,7 @@ pbf_hg.add_edge(
 pbf_hg.add_edge(
     {'prev': bed_is_leveled,
      'firing': laser_is_on,
-     'clearing': blade_is_clearing,
+     'returning': blade_is_returning,
      'rel_pos': blade_relative_position},
     target=bed_is_leveled,
     label='check_bed_leveled',

@@ -18,7 +18,7 @@ def visualization_caller(hg: Hypergraph):
     plt.show()
 
 def animation_caller(hg: Hypergraph, inputs: dict, frames: int=20, 
-                     interval: float=0.5):
+                     interval: float=0.2):
     """Animates the PBF machine for the given inputs."""
     t = hg.solve('blade_position', inputs, min_index=frames)
     kwargs = filter_dict_to_kwargs(plot_pbf, inputs)
