@@ -1,7 +1,12 @@
 .venv/
 .vscode/
 dev/
+
 .DS_Store*
 __pycache__*
 *.log
+
+.$*
+*.bkp
+
 hg_plotter.py

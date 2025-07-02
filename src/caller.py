@@ -46,10 +46,10 @@ debug_edges = [
 ]
 
 t = pbf_hg.solve(
-    'blade_position',
+    'leveling_time',
     inputs,
-    min_index=3,
-    search_depth=500,
+    min_index=0,
+    # search_depth=500,
     # to_print=True,
     # debug_nodes=debug_nodes,
     # debug_edges=debug_edges,
@@ -69,9 +69,9 @@ print(t if t is not None else "No solutions")
 # print_vals(t, 'blade_is_returning')
 # print_vals(t, 'blade_velocity')
 # print_vals(t, 'blade_position')
-# print_vals(t, 'blade_relative_position')
+# print_vals(t, 'blade_relative_position')        
 
 
 # visualization_caller(pbf_hg)
 
-animation_caller(pbf_hg, inputs, frames=101)
+animation_caller(pbf_hg, inputs, frames=201)

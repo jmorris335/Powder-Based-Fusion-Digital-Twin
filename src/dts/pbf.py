@@ -228,6 +228,16 @@ pbf_hg.add_edge(
 
 ##    Build Process    #################################################
 pbf_hg.add_edge(
+    {'leveled': bed_is_leveled,
+     'progress': build_progress,
+     'time': time,
+     'prev_start': scan_start_time},
+    target=scan_start_time,
+    rel=Rcalc_fusing_start_time,
+    index_offset=1,
+    edge_props=['LEVEL', 'DISPOSE_ALL'],
+)
+pbf_hg.add_edge(
     {'scan_time': layer_scan_time,
     'time':time},
     target=scan_end_time,
@@ -272,16 +282,6 @@ pbf_hg.add_edge(
     edge_props=['LEVEL', 'DISPOSE_ALL'],
 )
 pbf_hg.add_edge(
-    {'leveled': bed_is_leveled,
-     'progress': build_progress,
-     'time': time,
-     'prev_start': scan_start_time},
-    target=scan_start_time,
-    rel=Rcalc_fusing_start_time,
-    index_offset=1,
-    edge_props=['LEVEL', 'DISPOSE_ALL'],
-)
-pbf_hg.add_edge(
     {'keyframe': scan_start_time,
      'time': time,
      'finished': layer_fused},
@@ -292,7 +292,7 @@ pbf_hg.add_edge(
 )
 pbf_hg.add_edge(
     {'height': plate_y_position,
-     'initial': bed_height,
+     'initial': bed_height, #Should this be plate_initial_y_position
      'num_layers': layers_completed,
      'step': plate_lowering_distance,
      'tol': height_tol},
