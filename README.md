@@ -1,6 +1,8 @@
 # Powder Based Fusion Digital Twin
 Digital Twin for a Powder-Bed Fusion (PBF) additive manufacturing process.
 
+https://github.com/jmorris335/Powder-Based-Fusion-Digital-Twin/blob/c9d45b2103ba43621eb44225002483fd4a7983b3/media/pbf%20process%20animation.gif
+
 # Running
 ## General Setup
 Package dependencies ([ConstraintHg](https://constrainthg.readthedocs.io/en/latest/index.html) and Matplotlib) are in the `requirements.txt` file. After downloading the repo and initializing your virtual environment, just call 
@@ -31,5 +33,5 @@ To visualize the full PBF machine, use the methods in `aux/plotter.py`:
 - `animation_caller()` animates a process of the PBF machine.
 
 # Information
-Authors: [John Morris](https://orcid.org/0009-0005-6571-1959), [Duncan Gibbons](https://orcid.org/0000-0002-7641-4221), [Joe Gregory](https://orcid.org/0000-0002-4027-6314)
+Authors: [John Morris](https://orcid.org/0009-0005-6571-1959), [Duncan Gibbons](https://orcid.org/0000-0002-7641-4221), [Joe Gregory](https://orcid.org/0000-0002-4027-6314)  
 License: MIT License
