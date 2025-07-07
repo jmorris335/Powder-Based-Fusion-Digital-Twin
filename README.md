@@ -1,7 +1,7 @@
 # Powder Based Fusion Digital Twin
 Digital Twin for a Powder-Bed Fusion (PBF) additive manufacturing process.
 
-https://github.com/jmorris335/Powder-Based-Fusion-Digital-Twin/blob/c9d45b2103ba43621eb44225002483fd4a7983b3/media/pbf%20process%20animation.gif
+![image](https://github.com/user-attachments/assets/71fde9a2-9af9-4659-a2aa-4d43cbeae0db)
 
 # Running
 ## General Setup
