@@ -70,3 +70,14 @@ hopper_hg.add_edge(
     target=material_mass,
     rel=R.Rmultiply
 )
+
+
+if __name__ == '__main__':
+    inputs = dict(
+        hopper_x_position=400,
+        hopper_initial_y_position=140,
+        hopper_width=200,
+        material_density=0.0027,
+    )
+
+    hopper_hg.solve(material_mass, inputs, to_print=True)
