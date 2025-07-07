@@ -6,8 +6,7 @@ from dts.build_plate import plate_hg
 from dts.hopper import hopper_hg
 from dts.laser import laser_hg
 
-chamber_hg = Hypergraph()
-chamber_hg.union(chamber_hg, plate_hg, blade_hg, hopper_hg, laser_hg)
+chamber_hg = plate_hg + blade_hg + hopper_hg + laser_hg
 
 # Nodes
 chamber_temperature = chamber_hg.add_node(Node(

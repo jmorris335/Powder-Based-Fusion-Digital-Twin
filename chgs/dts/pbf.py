@@ -5,8 +5,7 @@ from dts.chamber import chamber_hg
 from dts.part import part_hg
 from relations.relations import *
 
-pbf_hg = Hypergraph(no_weights=True)
-pbf_hg.union(pbf_hg, chamber_hg, part_hg)
+pbf_hg = chamber_hg + part_hg
 
 
 ########################################################################

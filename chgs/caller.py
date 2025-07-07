@@ -26,7 +26,7 @@ inputs = dict(
     hopper_raising_distance=1.5,
     hopper_width=200,
     laser_is_on=True,
-    layer_scan_times=[5. + 4 * random.random() for i in range(30)],
+    layer_scan_times=[2. + 1 * random.random() for i in range(30)],
     layers_completed=0,
     material_density=0.0027,
     scan_start_time=0.0,
@@ -74,4 +74,4 @@ print(t if t is not None else "No solutions")
 
 # visualization_caller(pbf_hg)
 
-# animation_caller(pbf_hg, inputs, frames=201)
+animation_caller(pbf_hg, inputs, frames=101)
